@@ -18,15 +18,26 @@ import (
 )
 
 var config = Config{}
-var dao = MoviesDAO{}
+var dao = DAO{}
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/movies", AllMoviesEndPoint).Methods("GET")
-	r.HandleFunc("/movies", CreateMovieEndPoint).Methods("POST")
-	r.HandleFunc("/movies", UpdateMovieEndPoint).Methods("PUT")
-	r.HandleFunc("/movies", DeleteMovieEndPoint).Methods("DELETE")
-	r.HandleFunc("/movies/{id}", FindMovieEndpoint).Methods("GET")
+	//movies
+	r.HandleFunc("/analyzer/movies", AllMoviesEndPoint).Methods("GET")
+	r.HandleFunc("/analyzer/movies", CreateMovieEndPoint).Methods("POST")
+	r.HandleFunc("/analyzer/movies", UpdateMovieEndPoint).Methods("PUT")
+	r.HandleFunc("/analyzer/movies", DeleteMovieEndPoint).Methods("DELETE")
+	r.HandleFunc("/analyzer/movies/{id}", FindMovieEndpoint).Methods("GET")
+
+	//channels
+	r.HandleFunc("/analyzer/channels", CreateChannelEndPoint).Methods("POST")
+	r.HandleFunc("/analyzer/channels", AllChannelsEndPoint).Methods("GET")
+	r.HandleFunc("/analyzer/channels/{id}", FindChannelEndpoint).Methods("GET")
+
+
+
+
+
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal(err)
 	}
@@ -42,6 +53,16 @@ func AllMoviesEndPoint(w http.ResponseWriter, r *http.Request) {
 	respondWithJson(w, http.StatusOK, movies)
 }
 
+// GET list of channel data - data dump
+func AllChannelsEndPoint(w http.ResponseWriter, r *http.Request) {
+	channels, err := dao.FindAllChannels()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJson(w, http.StatusOK, channels)
+}
+
 // GET a movie by its ID
 func FindMovieEndpoint(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -51,6 +72,17 @@ func FindMovieEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJson(w, http.StatusOK, movie)
+}
+
+// GET a movie by its ID
+func FindChannelEndpoint(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	channel, err := dao.FindChannelById(params["id"])
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Channel ID")
+		return
+	}
+	respondWithJson(w, http.StatusOK, channel)
 }
 
 // POST a new movie
@@ -67,6 +99,23 @@ func CreateMovieEndPoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJson(w, http.StatusCreated, movie)
+}
+
+
+// POST a new channel
+func CreateChannelEndPoint(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	var channel Channel
+	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	channel.ID = bson.NewObjectId()
+	if err := dao.InsertChannel(channel); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJson(w, http.StatusCreated, channel)
 }
 
 // PUT update an existing movie
