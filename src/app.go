@@ -22,6 +22,7 @@ var dao = DAO{}
 
 func main() {
 	r := mux.NewRouter()
+
 	//movies
 	r.HandleFunc("/analyzer/movies", AllMoviesEndPoint).Methods("GET")
 	r.HandleFunc("/analyzer/movies", CreateMovieEndPoint).Methods("POST")
@@ -34,9 +35,6 @@ func main() {
 	r.HandleFunc("/analyzer/channels", AllChannelsEndPoint).Methods("GET")
 	r.HandleFunc("/analyzer/channels/{id}", FindChannelEndpoint).Methods("GET")
 	r.HandleFunc("/analyzer/report", IssueReportEndPoint).Methods("GET")
-
-
-
 
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
@@ -53,46 +51,6 @@ func AllMoviesEndPoint(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJson(w, http.StatusOK, movies)
 }
-
-// GET list of channel data - data dump
-func AllChannelsEndPoint(w http.ResponseWriter, r *http.Request) {
-	channels, err := dao.FindAllChannels()
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	respondWithJson(w, http.StatusOK, channels)
-}
-
-func IssueReportEndPoint(w http.ResponseWriter, r *http.Request) {
-	dao.GenerateReport()
-	//if err != nil {
-	//	respondWithError(w, http.StatusInternalServerError, err.Error())
-	//	return
-	//}
-
-	jsonConfig := []byte(`{
-        "server":{
-            "host":"localhost",
-            "port":"8080"},
-        "database":{
-            "host":"localhost",
-            "user":"db_user",
-            "password":"supersecret",
-            "db":"my_db"}}`)
-
-	var report Report
-	err := json.Unmarshal(jsonConfig, &report)
-	if err != nil {
-		panic(err)
-	}
-	//fmt.Printf("Config: %+v\n", config)
-
-
-	respondWithJson(w, http.StatusOK, report)
-}
-
-
 
 // GET a movie by its ID
 func FindMovieEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -132,23 +90,6 @@ func CreateMovieEndPoint(w http.ResponseWriter, r *http.Request) {
 	respondWithJson(w, http.StatusCreated, movie)
 }
 
-
-// POST a new channel
-func CreateChannelEndPoint(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	var channel Channel
-	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
-	channel.ID = bson.NewObjectId()
-	if err := dao.InsertChannel(channel); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	respondWithJson(w, http.StatusCreated, channel)
-}
-
 // PUT update an existing movie
 func UpdateMovieEndPoint(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
@@ -179,6 +120,47 @@ func DeleteMovieEndPoint(w http.ResponseWriter, r *http.Request) {
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
 }
 
+// &&&&&&&&&&&&&&&&&CHANNELS &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+// POST a new channel
+func CreateChannelEndPoint(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	var channel Channel
+	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	channel.ID = bson.NewObjectId()
+	if err := dao.InsertChannel(channel); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJson(w, http.StatusCreated, channel)
+}
+
+// GET list of channel data - data dump
+func AllChannelsEndPoint(w http.ResponseWriter, r *http.Request) {
+	channels, err := dao.FindAllChannels()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJson(w, http.StatusOK, channels)
+}
+
+// Generate Report
+func IssueReportEndPoint(w http.ResponseWriter, r *http.Request) {
+	report,err := dao.GenerateReport()
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondWithJson(w, http.StatusOK, report)
+}
+
+//&&&&&&&&&&&&&&&&HELPERS&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 func respondWithError(w http.ResponseWriter, code int, msg string) {
 	respondWithJson(w, code, map[string]string{"error": msg})
 }
@@ -202,5 +184,3 @@ func init() {
 	fmt.Println("Db: " + config.Database)
 	dao.Connect()
 }
-
-// Define HTTP request routes

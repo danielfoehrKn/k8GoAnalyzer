@@ -1,2 +1,2 @@
-server="localhost:27017"
+server="mongodb://mongo-set-0.mongo-service,mongo-set-1.mongo-service,mongo-set-2.mongo-service:27017"
 database="github"
