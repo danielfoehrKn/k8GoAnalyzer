@@ -17,3 +17,28 @@ type Channel struct {
 	GithubRepo string        `bson:"githubRepo" json:"githubRepo"`
 	Label      string        `bson:"label" json:"label"`
 }
+
+//type SingleIssueOverview struct {
+//	GithubRepo  string
+//	Database string
+//}
+//
+//
+//type IssueOverview struct {
+//	Report   []SingleIssueOverview
+//	TotalIssueCount string
+//	TotalRepoCount int32
+//}
+
+type Report struct {
+	Server struct {
+		Host string `json:"host"`
+		Port string `json:"port"`
+	} `json:"server"`
+	Postgres struct {
+		Host     string `json:"host"`
+		User     string `json:"user"`
+		Password string `json:"password"`
+		DB       string `json:"db"`
+	} `json:"database"`
+}

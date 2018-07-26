@@ -33,6 +33,7 @@ func main() {
 	r.HandleFunc("/analyzer/channels", CreateChannelEndPoint).Methods("POST")
 	r.HandleFunc("/analyzer/channels", AllChannelsEndPoint).Methods("GET")
 	r.HandleFunc("/analyzer/channels/{id}", FindChannelEndpoint).Methods("GET")
+	r.HandleFunc("/analyzer/report", IssueReportEndPoint).Methods("GET")
 
 
 
@@ -62,6 +63,36 @@ func AllChannelsEndPoint(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJson(w, http.StatusOK, channels)
 }
+
+func IssueReportEndPoint(w http.ResponseWriter, r *http.Request) {
+	dao.GenerateReport()
+	//if err != nil {
+	//	respondWithError(w, http.StatusInternalServerError, err.Error())
+	//	return
+	//}
+
+	jsonConfig := []byte(`{
+        "server":{
+            "host":"localhost",
+            "port":"8080"},
+        "database":{
+            "host":"localhost",
+            "user":"db_user",
+            "password":"supersecret",
+            "db":"my_db"}}`)
+
+	var report Report
+	err := json.Unmarshal(jsonConfig, &report)
+	if err != nil {
+		panic(err)
+	}
+	//fmt.Printf("Config: %+v\n", config)
+
+
+	respondWithJson(w, http.StatusOK, report)
+}
+
+
 
 // GET a movie by its ID
 func FindMovieEndpoint(w http.ResponseWriter, r *http.Request) {

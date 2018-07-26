@@ -44,6 +44,46 @@ func (m *DAO) FindAllChannels() ([]Channel, error) {
 	return channels, err
 }
 
+func (m *DAO) GenerateReport() {
+// see https://stackoverflow.com/questions/26062658/mongodb-aggregation-in-golang
+	o1 := bson.M{
+		"$group": bson.M{
+			"_id": bson.M{
+				"repo": "$githubRepo",
+				"action": "$action",
+				"label": "$label",
+			},
+			"count": bson.M{
+				"$sum": 1,
+			},
+		},
+	}
+	// ability to chain a lot of commands like filter, match etc.
+	operations := []bson.M{o1}
+
+	pipe := db.C(COLLECTION_CHANNELS).Pipe(operations)
+
+	// Run the queries and capture the results
+	results := []bson.M{}
+	err1 := pipe.All(&results)
+
+	if err1 != nil {
+		fmt.Printf("ERROR : %s\n", err1.Error())
+		//return nil, err1
+	} else {
+		//fmt.Printf("Id : %s, Size: %sn", results[0]["_id"], results[0]["count"])
+		fmt.Printf("Results : %s", results)
+	}
+
+
+	//var channels []Channel
+	//err := db.C(COLLECTION_CHANNELS).Find(bson.M{}).All(&channels)
+	//return channels, err
+}
+
+
+
+
 // Find a movie by its id
 func (m *DAO) FindById(id string) (Movie, error) {
 	var movie Movie

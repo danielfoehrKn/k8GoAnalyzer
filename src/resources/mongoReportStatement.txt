@@ -1,0 +1,9 @@
+//switch to github db
+use github
+// Group by repo, action and label
+db.channels.aggregate( {"$group" :  {_id : {repo:"$githubRepo", action: "$action", label: "$label"},
+ count : { $sum : 1} } } )
+
+
+//Count
+db.channels.count();
