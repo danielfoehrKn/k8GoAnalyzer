@@ -5,16 +5,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	//go get dependencies
-	"./gopkg.in/mgo.v2/bson"
-	"./github.com/gorilla/mux"
-
-	//my packages
-	. "./config"
-	. "./dao"
-	. "./models"
 	"log"
 	"fmt"
+
+	"github.com/gorilla/mux"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var config = Config{}

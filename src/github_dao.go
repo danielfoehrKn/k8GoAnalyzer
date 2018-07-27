@@ -1,11 +1,10 @@
-package dao
+package main
 
 import (
 "log"
-. "../models"
-"../gopkg.in/mgo.v2"
-"../gopkg.in/mgo.v2/bson"
 	"fmt"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type DAO struct {
